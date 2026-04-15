@@ -88,10 +88,16 @@ bb inv-update --id 1 --issue-date "2026-04-01"
 bb inv-update --id 1 --net 45
 bb inv-update --id 1 --due-date "2026-06-01"
 
-# Mark ready
+# Mark ready (ready for sending)
 bb inv-update --id 1 --status "ready"
 
-# Mark paid (locks the invoice from further updates)
+# Mark fully paid (locks the invoice from further updates)
+bb inv-update --id 1 --status "paid"
+
+# Record partial payment (must use --status paid simultaneously)
+bb inv-update --id 1 --status "paid" --payment-amount 95400
+
+# Record full payment (omit --payment-amount for full amount)
 bb inv-update --id 1 --status "paid"
 ```
 
@@ -101,6 +107,7 @@ bb inv-update --id 1 --status "paid"
 | `--item-desc`    | no       | Line item description (use with `--item-amount`)  |
 | `--item-amount`  | no       | Line item amount (use with `--item-desc`)         |
 | `--status`       | no       | Set status: `draft`, `ready`, or `paid`          |
+| `--payment-amount` | no     | Payment received (requires `--status paid`)      |
 | `--description`  | no       | Update invoice subject line                      |
 | `--issue-date`   | no       | Update issue date (recalculates due date)        |
 | `--due-date`     | no       | Override due date directly                       |
@@ -140,9 +147,14 @@ billable/
 
 ## Invoice statuses
 
-- **draft** -- default, fully editable
-- **ready** -- editable, marks invoice as ready to send (sets `ready-at`)
-- **paid** -- locked, no further updates allowed (sets `paid-at`)
+- **draft** -- default, fully editable, shows "DRAFT" badge on PDF
+- **ready** -- editable, marks invoice as ready to send (sets `ready-at`), no status badge shown on PDF
+- **paid** -- locked, no further updates allowed (sets `paid-at`), shows "PAID" badge on PDF
+
+When marking an invoice as paid, you can optionally provide a `--payment-amount` to record partial payments. The invoice will show:
+- Subtotal (original amount)
+- Payments (negative amount received)
+- Amount due (remaining balance)
 
 ## Timestamps
 

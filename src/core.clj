@@ -75,10 +75,13 @@
         status (:status invoice)
         net (or (:net invoice) 30)
         notes (or (:notes invoice) (:notes settings))
-        paid? (= status "paid")]
+        paid? (= status "paid")
+        payment-amt (or (:payment-amount invoice) (when paid? total) 0)
+        amount-due (- total payment-amt)]
     (selmer/render (slurp "templates/invoice.html")
                    {:status       status
                     :status-upper (str/upper-case status)
+                    :show-status  (not= status "ready")
                     :id           (:id invoice)
                     :issue-date   (:issue-date invoice)
                     :due-date     (:due-date invoice)
@@ -90,7 +93,8 @@
                                                (format-amount (:amount %) currency))
                                       items)
                     :subtotal     (format-amount total currency)
-                    :amount-due   (format-amount (if paid? 0 total) currency)
+                    :payment-amount (when (> payment-amt 0) (format-amount (- payment-amt) currency))
+                    :amount-due   (format-amount amount-due currency)
                     :notes        (when notes (nl->br notes))})))
 
 ;; --- pdf generation ---
@@ -161,10 +165,11 @@
    :issue-date {}
    :due-date {}
    :net {:coerce :int}
-   :notes {}})
+   :notes {}
+   :payment-amount {:coerce :double}})
 
 (def ^:private simple-invoice-keys
-  [:status :description :net :issue-date :due-date :notes])
+  [:status :description :net :issue-date :due-date :notes :payment-amount])
 
 (defn apply-invoice-opts [invoice opts]
   (let [invoice (merge invoice (select-keys opts simple-invoice-keys))
@@ -226,6 +231,10 @@
       (System/exit 1))
     (when (= "paid" (:status invoice))
       (println "Error: cannot update a paid invoice.")
+      (System/exit 1))
+    (when (and (:payment-amount opts)
+               (not= "paid" (:status opts)))
+      (println "Error: payment amount can only be set when marking invoice as paid. Use --status paid.")
       (System/exit 1))
     (let [invoice (-> (apply-invoice-opts invoice (dissoc opts :id :client))
                       (assoc :updated-at (now)))

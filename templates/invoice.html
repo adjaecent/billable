@@ -53,7 +53,7 @@
 </style>
 </head>
 <body>
-<h1>EXPORT INVOICE <span class="status {{status}}">{{status-upper}}</span></h1>
+<h1>EXPORT INVOICE {% if show-status %}<span class="status {{status}}">{{status-upper}}</span>{% endif %}</h1>
 
 <div class="header">
   <div class="addr">
@@ -90,6 +90,7 @@
   </tbody>
   <tfoot>
     <tr><td>Subtotal</td><td class="amt">{{subtotal}}</td></tr>
+    {% if payment-amount %}<tr><td>Payments</td><td class="amt">{{payment-amount}}</td></tr>{% endif %}
   </tfoot>
 </table>
 
