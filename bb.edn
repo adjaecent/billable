@@ -1,0 +1,20 @@
+{:paths ["src"]
+ :tasks
+ {init       {:doc "Create a sample settings.edn"
+              :requires ([core])
+              :task (core/init-cmd *command-line-args*)}
+  client-add {:doc "Add a new client"
+              :requires ([core])
+              :task (core/client-add-cmd *command-line-args*)}
+  inv-create {:doc "Create a new invoice"
+              :requires ([core])
+              :task (core/inv-create-cmd *command-line-args*)}
+  inv-update {:doc "Update an invoice"
+              :requires ([core])
+              :task (core/inv-update-cmd *command-line-args*)}
+  inv-delete {:doc "Delete an invoice"
+              :requires ([core])
+              :task (core/inv-delete-cmd *command-line-args*)}
+  list       {:doc "List clients or invoices"
+              :requires ([core])
+              :task (core/list-cmd *command-line-args*)}}}
