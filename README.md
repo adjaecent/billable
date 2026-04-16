@@ -75,7 +75,7 @@ Items can only be added one at a time.
 
 ```bash
 # Add a line item
-bb inv-update --id 1 --item-desc "Software Development - SAC 998314" --item-amount 190800
+bb inv-update --id 1 --item-desc "Software Development" --item-amount 10000
 
 # Add another line item
 bb inv-update --id 1 --item-desc "Reimbursements" --item-amount 5000
@@ -95,7 +95,7 @@ bb inv-update --id 1 --status "ready"
 bb inv-update --id 1 --status "paid"
 
 # Record partial payment (must use --status paid simultaneously)
-bb inv-update --id 1 --status "paid" --payment-amount 95400
+bb inv-update --id 1 --status "paid" --payment-amount 5000
 
 # Record full payment (omit --payment-amount for full amount)
 bb inv-update --id 1 --status "paid"
