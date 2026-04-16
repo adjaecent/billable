@@ -12,7 +12,7 @@
 (def invoices-file (str data-dir "/invoices.edn"))
 (def settings-file (str data-dir "/settings.edn"))
 
-(def chrome-bin "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+(def default-chrome-bin "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 (def currency-symbols
   {"ZAR" "R"
@@ -99,14 +99,15 @@
 
 ;; --- pdf generation ---
 
-(defn generate-pdf [html-path pdf-path]
-  (process/shell {:err :string}
-                 chrome-bin
+(defn generate-pdf [settings html-path pdf-path]
+  (let [chrome (or (:chrome-bin settings) default-chrome-bin)]
+    (process/shell {:err :string}
+                   chrome
                  "--headless"
                  "--disable-gpu"
                  "--no-pdf-header-footer"
-                 (str "--print-to-pdf=" (fs/absolutize pdf-path))
-                 (str "file://" (fs/absolutize html-path))))
+                   (str "--print-to-pdf=" (fs/absolutize pdf-path))
+                   (str "file://" (fs/absolutize html-path)))))
 
 (defn render-invoice [{:keys [invoices invoice client]}]
   (let [settings (read-settings)
@@ -116,7 +117,7 @@
         html (generate-html invoice client settings)
         updated (assoc invoice :html-file html-file :pdf-file pdf-file)]
     (spit html-file html)
-    (generate-pdf html-file pdf-file)
+    (generate-pdf settings html-file pdf-file)
     (write-edn invoices-file (assoc invoices id updated))
     (println (str "  -> " html-file))
     (println (str "  -> " pdf-file))))
@@ -135,7 +136,8 @@
                    :lut "XX000000000000X"
                    :phone "+00-00000-00000"
                    :email "you@example.com"
-                   :notes "Bank Details\nAccount: XXXX\nIFSC: XXXX"})
+                   :notes "Bank Details\nAccount: XXXX\nIFSC: XXXX"
+                   :chrome-bin default-chrome-bin})
       (println (str "Sample settings created at " settings-file))
       (println "Edit this file with your details before creating invoices."))))
 
