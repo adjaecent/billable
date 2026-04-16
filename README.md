@@ -4,7 +4,7 @@ Babashka-based invoice generator. Stores data in EDN, generates HTML + PDF via h
 
 ## Setup
 
-Requires [Babashka](https://github.com/babashka/babashka) and Google Chrome.
+Requires [Babashka](https://github.com/babashka/babashka) and Google Chrome (or Chromium).
 
 Create a sample settings file and edit it with your details:
 
@@ -12,7 +12,7 @@ Create a sample settings file and edit it with your details:
 bb init
 ```
 
-This creates `data/settings.edn`:
+This creates `data/settings.edn`. On macOS the Chrome path is pre-filled; on Linux, update `:chrome-bin` to your Chrome/Chromium path (e.g. `/usr/bin/google-chrome`):
 
 ```edn
 {:name "Your Name"
@@ -21,7 +21,8 @@ This creates `data/settings.edn`:
  :lut "your-lut"
  :phone "+91-00000-00000"
  :email "you@example.com"
- :notes "Payment via wire transfer to HDFC account"}
+ :notes "Payment via wire transfer to HDFC account"
+ :chrome-bin "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}
 ```
 
 ## Commands
