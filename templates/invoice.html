@@ -59,7 +59,7 @@
   <div class="addr">
     <h2>From</h2>
     <strong>{{from.name}}</strong>
-    <div class="detail">{{from.address|safe}}<br><br>GSTN: {{from.gstn}}<br>LUT: {{from.lut}}<br><br>Phone: {{from.phone}}<br>Email: {{from.email}}</div>
+    <div class="detail">{{from.address|safe}}<br><br>{% if from.gstn %}GSTN: {{from.gstn}}<br>{% endif %}{% if from.lut %}LUT: {{from.lut}}<br>{% endif %}{% if from.gstn %}<br>{% elif from.lut %}<br>{% endif %}Phone: {{from.phone}}<br>Email: {{from.email}}</div>
   </div>
   <div class="addr">
     <h2>Invoice for</h2>
