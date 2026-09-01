@@ -78,12 +78,9 @@ with, since grouping follows locale rather than the currency itself:
 
 `bb init` writes these into `settings.edn` under `:currencies`, and that file
 is what the invoice actually renders from -- the table above is only the seed
-`init` copies in. Edit or extend it there:
-
-```edn
-:currencies {"ZAR" {:symbol "ZAR "}
-             "AED" {:symbol "AED " :group-sep "," :decimal-sep "."}}
-```
+`init` copies in. Nothing about the list is fixed: add any currency you bill
+in, and change how an existing one is written, by editing that map. Each entry
+takes these keys:
 
 | Key            | Meaning                                                   |
 |----------------|-----------------------------------------------------------|
@@ -96,15 +93,18 @@ is what the invoice actually renders from -- the table above is only the seed
 
 Only the keys you are changing are needed; the rest default to `:western`
 grouping with `,` and `.` and two decimals. A currency with no entry at all
-renders as its code followed by the amount, e.g. `CHF 1,234.56`.
+still works -- it renders as its code followed by the amount, e.g.
+`CHF 1,234.56` -- so an entry is only needed when you want a symbol or a
+different convention.
 
-Some examples:
-
-- `{:symbol "ZAR "}` renders `ZAR 1,234.56`
-- `{:symbol "R" :group-sep " " :decimal-sep ","}` renders the local South
-  African style, `R1 234,56`
-- `{:symbol "€" :group-sep "." :decimal-sep "," :symbol-after true}` renders
-  the German style, `1.234.567,50 €`
+```edn
+:currencies {"CHF" {:symbol "CHF "}                        ; CHF 1,234.56
+             "ZAR" {:symbol "ZAR "}                        ; ZAR 1,234.56
+             "SEK" {:symbol "kr" :group-sep " "
+                    :decimal-sep "," :symbol-after true}   ; 1 234,56 kr
+             "EUR" {:symbol "€" :group-sep "."
+                    :decimal-sep "," :symbol-after true}}  ; 1.234,56 €
+```
 
 ### Create an invoice
 
