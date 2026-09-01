@@ -185,26 +185,6 @@ bb list clients
 bb list invoices
 ```
 
-## File structure
-
-```
-billable/
-  bb.edn
-  .clj-kondo/
-    config.edn          # linter levels
-    imports/            # linter configs from bundled libraries
-    .cache/             # gitignored, built by `bb lint-deps`
-  templates/
-    invoice.html        # invoice template (selmer)
-  data/                 # gitignored
-    settings.edn        # your (from) details
-    clients.edn         # client records
-    invoices.edn        # invoice records
-  output/               # gitignored
-    INV-1.html          # generated invoice HTML
-    INV-1.pdf           # generated invoice PDF
-```
-
 ## Invoice statuses
 
 - **draft** -- default, fully editable, shows "DRAFT" badge on PDF
@@ -226,6 +206,28 @@ Invoices and clients store metadata timestamps (not shown on rendered invoices):
 - `:paid-at` -- set when status changes to "paid"
 
 ## Developer notes
+
+### File structure
+
+```
+billable/
+  bb.edn                # tasks
+  src/
+    core.clj            # everything: commands, rendering, formatting
+  .clj-kondo/
+    config.edn          # linter levels
+    imports/            # linter configs from bundled libraries
+    .cache/             # gitignored, built by `bb lint-deps`
+  templates/
+    invoice.html        # invoice template (selmer)
+  data/                 # gitignored
+    settings.edn        # your (from) details
+    clients.edn         # client records
+    invoices.edn        # invoice records
+  output/               # gitignored
+    INV-1.html          # generated invoice HTML
+    INV-1.pdf           # generated invoice PDF
+```
 
 ### Linting
 
