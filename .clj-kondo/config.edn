@@ -1,0 +1,17 @@
+{:linters
+ {;; correctness
+  :unresolved-symbol       {:level :error}
+  :unresolved-var          {:level :error}
+  :unresolved-namespace    {:level :error}
+  :invalid-arity           {:level :error}
+  :type-mismatch           {:level :error}
+  :missing-else-branch     {:level :warning}
+  :condition-always-true   {:level :warning}
+  :shadowed-var            {:level :warning}
+
+  ;; hygiene
+  :unused-binding          {:level :warning}
+  :unused-private-var      {:level :warning}
+  :unused-namespace        {:level :warning}
+  :unused-referred-var     {:level :warning}
+  :refer-all               {:level :warning}}}

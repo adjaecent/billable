@@ -1,6 +1,8 @@
 {:paths ["src"]
  :tasks
- {init       {:doc "Create a sample settings.edn"
+ {:init      (def kondo-version "2025.06.05")
+
+  init       {:doc "Create a sample settings.edn"
               :requires ([core])
               :task (core/init-cmd *command-line-args*)}
   client-add {:doc "Add a new client"
@@ -17,4 +19,28 @@
               :task (core/inv-delete-cmd *command-line-args*)}
   list       {:doc "List clients or invoices"
               :requires ([core])
-              :task (core/list-cmd *command-line-args*)}}}
+              :task (core/list-cmd *command-line-args*)}
+  lint       {:doc "Lint src and bb.edn with clj-kondo"
+              :requires ([babashka.pods :as pods])
+              :task (do (pods/load-pod 'clj-kondo/clj-kondo kondo-version)
+                        (require '[pod.borkdude.clj-kondo :as kondo])
+                        (let [run! (resolve 'kondo/run!)
+                              print! (resolve 'kondo/print!)
+                              {:keys [summary] :as result} (run! {:lint ["src" "bb.edn"]})]
+                          (print! result)
+                          (System/exit (if (pos? (+ (:error summary) (:warning summary)))
+                                         1
+                                         0))))}
+  lint-deps  {:doc "Index babashka's bundled libraries so lint knows their vars (needs a JDK)"
+              :requires ([babashka.pods :as pods]
+                         [babashka.process :as process]
+                         [clojure.string :as string])
+              :task (do (pods/load-pod 'clj-kondo/clj-kondo kondo-version)
+                        (require '[pod.borkdude.clj-kondo :as kondo])
+                        (let [cp (string/trim (:out (process/shell {:out :string}
+                                                                   "bb print-deps --format classpath")))
+                              run! (resolve 'kondo/run!)
+                              {:keys [summary]} (run! {:lint [cp]
+                                                       :dependencies true
+                                                       :copy-configs true})]
+                          (println "Indexed" (:files summary) "files into .clj-kondo/.cache")))}}}

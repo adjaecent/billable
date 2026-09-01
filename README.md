@@ -190,6 +190,10 @@ bb list invoices
 ```
 billable/
   bb.edn
+  .clj-kondo/
+    config.edn          # linter levels
+    imports/            # linter configs from bundled libraries
+    .cache/             # gitignored, built by `bb lint-deps`
   templates/
     invoice.html        # invoice template (selmer)
   data/                 # gitignored
@@ -221,6 +225,31 @@ Invoices and clients store metadata timestamps (not shown on rendered invoices):
 - `:ready-at` -- set when status changes to "ready"
 - `:paid-at` -- set when status changes to "paid"
 
-## EDN validation
+## Developer notes
 
-All EDN files are validated on read. If a file contains malformed EDN, the command exits with an error message.
+### Linting
+
+```bash
+bb lint
+```
+
+Runs [clj-kondo](https://github.com/clj-kondo/clj-kondo) over `src` and
+`bb.edn` and exits non-zero on any error or warning. It runs as a babashka
+pod, so there is nothing to install. Linter levels live in
+`.clj-kondo/config.edn`.
+
+```bash
+bb lint-deps
+```
+
+Optional, and only needed once per checkout: it indexes the libraries babashka
+bundles (`babashka.fs`, `selmer`, and so on) into `.clj-kondo/.cache`, so
+`bb lint` also catches misspelled vars and wrong arities in calls to them.
+The cache is gitignored, and this step shells out to `bb print-deps`, which
+needs a JDK on the `PATH`.
+
+### EDN validation
+
+All EDN files are validated on read. If a file contains malformed EDN, the
+command exits with an error message rather than rendering a half-parsed
+invoice.
