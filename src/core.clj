@@ -98,6 +98,45 @@
       (System/exit 1))
     s))
 
+(defn parse-tax-id
+  "Parses a LABEL=VALUE pair, e.g. \"VAT=GB123456789\"."
+  [s]
+  (let [[label value] (str/split s #"=" 2)]
+    (when (str/blank? value)
+      (println (str "Error: tax id \"" s "\" must be LABEL=VALUE, e.g. VAT=GB123456789"))
+      (System/exit 1))
+    {:label label :value value}))
+
+(defn parse-registration
+  "Parses --registration, either LABEL=VALUE or a bare value that keeps the
+   default \"Registration\" label."
+  [s]
+  (if (str/includes? s "=")
+    (parse-tax-id s)
+    {:label "Registration" :value s}))
+
+(defn client-registration
+  "The client's own identifier as {:label .. :value ..}. A plain string in
+   clients.edn still works and means the default label."
+  [client]
+  (when-let [r (:registration client)]
+    (if (map? r)
+      (merge {:label "Registration"} r)
+      {:label "Registration" :value r})))
+
+(defn merge-tax-ids
+  "Your settings-level ids followed by the ones set on the client, one entry
+   per label in the order they first appear. A client entry replaces a
+   settings entry with the same label, so a client can override the general
+   value."
+  [settings-ids client-ids]
+  (seq (reduce (fn [acc {:keys [label] :as tax-id}]
+                 (if-let [i (first (keep-indexed #(when (= label (:label %2)) %1) acc))]
+                   (assoc acc i tax-id)
+                   (conj acc tax-id)))
+               []
+               (concat settings-ids client-ids))))
+
 (defn nl->br [s]
   (when s (str/replace s "\n" "<br>")))
 
@@ -121,7 +160,8 @@
         formats (:currencies settings)]
     (selmer/render (slurp "templates/invoice.html")
                    {:title        (or (:title client) default-title)
-                    :lut          (:lut client)
+                    :tax-ids      (merge-tax-ids (:tax-ids settings) (:from-tax-ids client))
+                    :registration (client-registration client)
                     :status       status
                     :status-upper (str/upper-case status)
                     :show-status  (not= status "ready")
@@ -175,7 +215,7 @@
       (write-edn settings-file
                   {:name "Your Name"
                    :address "123 Main Street\nCity, State\nCountry - 000000"
-                   :gstn "00XXXXX0000X0XX"
+                   :tax-ids [{:label "GSTN" :value "00XXXXX0000X0XX"}]
                    :phone "+00-00000-00000"
                    :email "you@example.com"
                    :notes "Bank Details\nAccount: XXXX\nIFSC: XXXX"
@@ -194,16 +234,19 @@
                                           :address {:require true}
                                           :registration {}
                                           :title {}
-                                          :lut {}}})
+                                          :from-tax-id {:coerce []}}})
         clients (read-clients)
         id (next-id clients)
         client {:id id
                 :name (:name opts)
                 :currency (str/upper-case (:currency opts))
                 :address (:address opts)
-                :registration (:registration opts)
+                :registration (some-> (:registration opts) parse-registration)
                 :title (:title opts)
-                :lut (:lut opts)
+                :from-tax-ids (some->> (:from-tax-id opts)
+                                       (map parse-tax-id)
+                                       (merge-tax-ids nil)
+                                       vec)
                 :created-at (now)}]
     (write-edn clients-file (assoc clients id client))
     (println (str "Client added with ID: " id))))

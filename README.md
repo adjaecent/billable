@@ -17,7 +17,7 @@ This creates `data/settings.edn`. On macOS the Chrome path is pre-filled; on Lin
 ```edn
 {:name "Your Name"
  :address "Line 1\nLine 2\nCity, Country"
- :gstn "your-gstn"
+ :tax-ids [{:label "GSTN" :value "your-gstn"}]
  :phone "+91-00000-00000"
  :email "you@example.com"
  :notes "Payment via wire transfer to HDFC account"
@@ -44,9 +44,9 @@ Creates a sample `data/settings.edn`. Won't overwrite if one already exists.
 bb client-add --name "Acme Corp" \
               --currency "USD" \
               --address $'123 Business Ave\nNew York, NY 10001\nUnited States' \
-              --registration "2024/123456/07" \
+              --registration "Company No.=2024/123456/07" \
               --title "Tax Invoice" \
-              --lut "XX000000000000X"
+              --from-tax-id "VAT=DE123456789"
 ```
 
 | Flag             | Required | Description                          |
@@ -54,11 +54,44 @@ bb client-add --name "Acme Corp" \
 | `--name`         | yes      | Client name                          |
 | `--currency`     | yes      | Currency code (USD, EUR, GBP, SGD, INR, ZAR) |
 | `--address`      | yes      | Client address (use `$'\n'` for newlines) |
-| `--registration` | no       | Registration / company number        |
+| `--registration` | no       | The client's own identifier, `LABEL=VALUE`; a bare value is labelled `Registration` |
 | `--title`        | no       | Invoice heading, uppercased on the invoice (default `Export Invoice`) |
-| `--lut`          | no       | LUT number, shown in the From block for this client only |
+| `--from-tax-id`  | no       | One of *your* tax ids, `LABEL=VALUE`, shown only on this client's invoices; repeatable |
 
-The heading is per-client, so different clients can get `Export Invoice`, `Tax Invoice`, or anything else. `--lut` is per-client too, since it only applies to export invoices; GSTN stays in `settings.edn` because it applies to every invoice. To change either for an existing client, edit `:title` / `:lut` in `data/clients.edn`.
+The heading is per-client, so different clients can get `Export Invoice`, `Tax Invoice`, or anything else. To change it for an existing client, edit `:title` in `data/clients.edn`.
+
+### Tax ids
+
+Your tax identifiers print in the From block of the invoice. They are plain
+label/value pairs, so any regime works -- GSTN, LUT, VAT, ABN, UID, or none at
+all. Put the ones that apply to every invoice in `settings.edn`, and the ones
+that apply to a single client (an export LUT, say) on the client under
+`:from-tax-ids` -- named for the From block, since these are your ids, not the
+client's:
+
+```edn
+;; settings.edn -- on every invoice
+:tax-ids [{:label "GSTN" :value "29ABCDE1234F1Z5"}]
+
+;; clients.edn -- only this client's invoices
+:from-tax-ids [{:label "LUT" :value "XX000000000000X"}]
+```
+
+The client's own identifier is separate: `:registration`, printed in the To
+block. It is a single label/value map rather than a list, since a client is
+identified by one number on an invoice:
+
+```edn
+:registration {:label "Company No." :value "HRB 12345"}
+```
+
+Omit `:label` and it reads `Registration`. A plain string, as older client
+records have, means the same thing.
+
+Either side can be omitted, so you can keep everything on the clients and
+nothing in settings. They render settings first, then client, one line each,
+in the order written. A label appears at most once: if both sides define
+`GSTN`, the client's value wins.
 
 ### Currency formatting
 

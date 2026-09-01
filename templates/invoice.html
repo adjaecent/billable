@@ -59,12 +59,12 @@
   <div class="addr">
     <h2>From</h2>
     <strong>{{from.name}}</strong>
-    <div class="detail">{{from.address|safe}}<br><br>{% if from.gstn %}GSTN: {{from.gstn}}<br>{% endif %}{% if lut %}LUT: {{lut}}<br>{% endif %}{% if from.gstn %}<br>{% elif lut %}<br>{% endif %}Phone: {{from.phone}}<br>Email: {{from.email}}</div>
+    <div class="detail">{{from.address|safe}}<br><br>{% for tax-id in tax-ids %}{{tax-id.label}}: {{tax-id.value}}<br>{% endfor %}{% if tax-ids %}<br>{% endif %}Phone: {{from.phone}}<br>Email: {{from.email}}</div>
   </div>
   <div class="addr">
     <h2>Invoice for</h2>
     <strong>{{client.name}}</strong>
-    <div class="detail">{% if client.registration %}Registration: {{client.registration}}<br><br>{% endif %}{{client.address|safe}}</div>
+    <div class="detail">{% if registration %}{{registration.label}}: {{registration.value}}<br><br>{% endif %}{{client.address|safe}}</div>
   </div>
 </div>
 
