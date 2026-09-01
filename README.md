@@ -18,7 +18,6 @@ This creates `data/settings.edn`. On macOS the Chrome path is pre-filled; on Lin
 {:name "Your Name"
  :address "Line 1\nLine 2\nCity, Country"
  :gstn "your-gstn"
- :lut "your-lut"
  :phone "+91-00000-00000"
  :email "you@example.com"
  :notes "Payment via wire transfer to HDFC account"
@@ -42,7 +41,8 @@ bb client-add --name "Acme Corp" \
               --currency "USD" \
               --address $'123 Business Ave\nNew York, NY 10001\nUnited States' \
               --registration "2024/123456/07" \
-              --title "Tax Invoice"
+              --title "Tax Invoice" \
+              --lut "XX000000000000X"
 ```
 
 | Flag             | Required | Description                          |
@@ -52,8 +52,9 @@ bb client-add --name "Acme Corp" \
 | `--address`      | yes      | Client address (use `$'\n'` for newlines) |
 | `--registration` | no       | Registration / company number        |
 | `--title`        | no       | Invoice heading, uppercased on the invoice (default `Export Invoice`) |
+| `--lut`          | no       | LUT number, shown in the From block for this client only |
 
-The heading is per-client, so different clients can get `Export Invoice`, `Tax Invoice`, or anything else. To change it for an existing client, edit `:title` in `data/clients.edn`.
+The heading is per-client, so different clients can get `Export Invoice`, `Tax Invoice`, or anything else. `--lut` is per-client too, since it only applies to export invoices; GSTN stays in `settings.edn` because it applies to every invoice. To change either for an existing client, edit `:title` / `:lut` in `data/clients.edn`.
 
 ### Create an invoice
 

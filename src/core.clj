@@ -81,6 +81,7 @@
         amount-due (- total payment-amt)]
     (selmer/render (slurp "templates/invoice.html")
                    {:title        (or (:title client) default-title)
+                    :lut          (:lut client)
                     :status       status
                     :status-upper (str/upper-case status)
                     :show-status  (not= status "ready")
@@ -135,7 +136,6 @@
                   {:name "Your Name"
                    :address "123 Main Street\nCity, State\nCountry - 000000"
                    :gstn "00XXXXX0000X0XX"
-                   :lut "XX000000000000X"
                    :phone "+00-00000-00000"
                    :email "you@example.com"
                    :notes "Bank Details\nAccount: XXXX\nIFSC: XXXX"
@@ -149,7 +149,8 @@
                                           :currency {:require true}
                                           :address {:require true}
                                           :registration {}
-                                          :title {}}})
+                                          :title {}
+                                          :lut {}}})
         clients (read-clients)
         id (next-id clients)
         client {:id id
@@ -158,6 +159,7 @@
                 :address (:address opts)
                 :registration (:registration opts)
                 :title (:title opts)
+                :lut (:lut opts)
                 :created-at (now)}]
     (write-edn clients-file (assoc clients id client))
     (println (str "Client added with ID: " id))))
