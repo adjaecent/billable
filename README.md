@@ -41,7 +41,8 @@ Creates a sample `data/settings.edn`. Won't overwrite if one already exists.
 bb client-add --name "Acme Corp" \
               --currency "USD" \
               --address $'123 Business Ave\nNew York, NY 10001\nUnited States' \
-              --registration "2024/123456/07"
+              --registration "2024/123456/07" \
+              --title "Tax Invoice"
 ```
 
 | Flag             | Required | Description                          |
@@ -50,6 +51,9 @@ bb client-add --name "Acme Corp" \
 | `--currency`     | yes      | Currency code (ZAR, USD, INR, EUR, GBP) |
 | `--address`      | yes      | Client address (use `$'\n'` for newlines) |
 | `--registration` | no       | Registration / company number        |
+| `--title`        | no       | Invoice heading, uppercased on the invoice (default `Export Invoice`) |
+
+The heading is per-client, so different clients can get `Export Invoice`, `Tax Invoice`, or anything else. To change it for an existing client, edit `:title` in `data/clients.edn`.
 
 ### Create an invoice
 

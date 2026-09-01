@@ -10,7 +10,7 @@
     font-size: 14px; color: #333; padding: 50px 60px;
     max-width: 800px; margin: 0 auto;
   }
-  h1 { font-size: 22px; font-weight: 600; margin-bottom: 32px; color: #1a1a1a; }
+  h1 { font-size: 22px; text-transform: uppercase; font-weight: 600; margin-bottom: 32px; color: #1a1a1a; }
   .status {
     display: inline-block; padding: 3px 12px; border-radius: 3px;
     font-size: 11px; text-transform: uppercase; font-weight: 600;
@@ -53,7 +53,7 @@
 </style>
 </head>
 <body>
-<h1>EXPORT INVOICE {% if show-status %}<span class="status {{status}}">{{status-upper}}</span>{% endif %}</h1>
+<h1>{{title}} {% if show-status %}<span class="status {{status}}">{{status-upper}}</span>{% endif %}</h1>
 
 <div class="header">
   <div class="addr">

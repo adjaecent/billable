@@ -13,6 +13,7 @@
 (def settings-file (str data-dir "/settings.edn"))
 
 (def default-chrome-bin "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+(def default-title "Export Invoice")
 
 (def currency-symbols
   {"ZAR" "R"
@@ -79,7 +80,8 @@
         payment-amt (or (:payment-amount invoice) (when paid? total) 0)
         amount-due (- total payment-amt)]
     (selmer/render (slurp "templates/invoice.html")
-                   {:status       status
+                   {:title        (or (:title client) default-title)
+                    :status       status
                     :status-upper (str/upper-case status)
                     :show-status  (not= status "ready")
                     :id           (:id invoice)
@@ -146,7 +148,8 @@
   (let [opts (cli/parse-opts args {:spec {:name {:require true}
                                           :currency {:require true}
                                           :address {:require true}
-                                          :registration {}}})
+                                          :registration {}
+                                          :title {}}})
         clients (read-clients)
         id (next-id clients)
         client {:id id
@@ -154,6 +157,7 @@
                 :currency (str/upper-case (:currency opts))
                 :address (:address opts)
                 :registration (:registration opts)
+                :title (:title opts)
                 :created-at (now)}]
     (write-edn clients-file (assoc clients id client))
     (println (str "Client added with ID: " id))))
