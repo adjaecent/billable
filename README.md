@@ -21,8 +21,12 @@ This creates `data/settings.edn`. On macOS the Chrome path is pre-filled; on Lin
  :phone "+91-00000-00000"
  :email "you@example.com"
  :notes "Payment via wire transfer to HDFC account"
- :chrome-bin "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}
+ :chrome-bin "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+ :currencies {...}}
 ```
+
+`:currencies` is pre-filled with the built-in formats -- see
+[Currency formatting](#currency-formatting).
 
 ## Commands
 
@@ -48,13 +52,59 @@ bb client-add --name "Acme Corp" \
 | Flag             | Required | Description                          |
 |------------------|----------|--------------------------------------|
 | `--name`         | yes      | Client name                          |
-| `--currency`     | yes      | Currency code (ZAR, USD, INR, EUR, GBP) |
+| `--currency`     | yes      | Currency code (USD, EUR, GBP, SGD, INR, ZAR) |
 | `--address`      | yes      | Client address (use `$'\n'` for newlines) |
 | `--registration` | no       | Registration / company number        |
 | `--title`        | no       | Invoice heading, uppercased on the invoice (default `Export Invoice`) |
 | `--lut`          | no       | LUT number, shown in the From block for this client only |
 
 The heading is per-client, so different clients can get `Export Invoice`, `Tax Invoice`, or anything else. `--lut` is per-client too, since it only applies to export invoices; GSTN stays in `settings.edn` because it applies to every invoice. To change either for an existing client, edit `:title` / `:lut` in `data/clients.edn`.
+
+### Currency formatting
+
+Amounts use the symbol and digit grouping the currency is normally written
+with, since grouping follows locale rather than the currency itself:
+
+| Currency | Example          |
+|----------|------------------|
+| USD      | `$1,234.56`      |
+| EUR      | `€1,234.56`      |
+| GBP      | `£1,234.56`      |
+| SGD      | `S$1,234.56`     |
+| AED      | `AED 1,234.56`   |
+| JPY      | `¥1,235`         |
+| INR      | `₹5,55,555.00`   |
+| ZAR      | `R1,234.56`      |
+
+`bb init` writes these into `settings.edn` under `:currencies`, and that file
+is what the invoice actually renders from -- the table above is only the seed
+`init` copies in. Edit or extend it there:
+
+```edn
+:currencies {"ZAR" {:symbol "ZAR "}
+             "AED" {:symbol "AED " :group-sep "," :decimal-sep "."}}
+```
+
+| Key            | Meaning                                                   |
+|----------------|-----------------------------------------------------------|
+| `:symbol`      | Prefix for the amount (include a trailing space if wanted) |
+| `:group-sep`   | Thousands separator                                        |
+| `:decimal-sep` | Decimal separator                                          |
+| `:grouping`    | `:western` (threes) or `:indian` (last three, then twos)   |
+| `:symbol-after`| `true` puts the symbol after the amount                     |
+| `:decimals`    | Digits after the decimal point (JPY uses `0`)               |
+
+Only the keys you are changing are needed; the rest default to `:western`
+grouping with `,` and `.` and two decimals. A currency with no entry at all
+renders as its code followed by the amount, e.g. `CHF 1,234.56`.
+
+Some examples:
+
+- `{:symbol "ZAR "}` renders `ZAR 1,234.56`
+- `{:symbol "R" :group-sep " " :decimal-sep ","}` renders the local South
+  African style, `R1 234,56`
+- `{:symbol "€" :group-sep "." :decimal-sep "," :symbol-after true}` renders
+  the German style, `1.234.567,50 €`
 
 ### Create an invoice
 

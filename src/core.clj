@@ -15,12 +15,27 @@
 (def default-chrome-bin "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 (def default-title "Export Invoice")
 
-(def currency-symbols
-  {"ZAR" "R"
-   "USD" "$"
-   "INR" "\u20b9"
-   "EUR" "\u20ac"
-   "GBP" "\u00a3"})
+;; Number formatting is a property of locale, not currency, so each currency
+;; carries the convention of the place it is normally invoiced in: grouping
+;; (:western is threes, :indian is the last three then twos), the group and
+;; decimal separators, how many decimals, and whether the symbol trails the
+;; amount. Amounts are kept on one line by the template, so plain spaces are
+;; fine in a symbol.
+;;
+;; These are seeds for `bb init` only -- at render time the formats come from
+;; :currencies in settings.edn, so editing that file is enough to change them.
+(def default-currency-format
+  {:grouping :western :group-sep "," :decimal-sep "." :decimals 2})
+
+(def default-currency-formats
+  {"ZAR" {:symbol "R"}
+   "USD" {:symbol "$"}
+   "SGD" {:symbol "S$"}
+   "INR" {:symbol "\u20b9" :grouping :indian}
+   "EUR" {:symbol "\u20ac"}
+   "GBP" {:symbol "\u00a3"}
+   "AED" {:symbol "AED "}
+   "JPY" {:symbol "\u00a5" :decimals 0}})
 
 ;; --- helpers ---
 
@@ -39,9 +54,33 @@
 (defn next-id [m]
   (if (empty? m) 1 (inc (apply max (keys m)))))
 
-(defn format-amount [amount currency]
-  (let [sym (get currency-symbols currency currency)]
-    (str sym (format "%,.2f" (double amount)))))
+(defn group-digits [digits sep]
+  (str/replace digits #"(\d)(?=(\d{3})+$)" (str "$1" sep)))
+
+(defn group-digits-indian [digits sep]
+  (if (<= (count digits) 3)
+    digits
+    (let [split (- (count digits) 3)]
+      (str (str/replace (subs digits 0 split) #"(\d)(?=(\d{2})+$)" (str "$1" sep))
+           sep (subs digits split)))))
+
+(defn format-amount
+  "Formats an amount using the :currencies entry from settings.edn. A currency
+   with no entry falls back to its code as the symbol and western grouping."
+  [amount currency formats]
+  (let [{:keys [grouping group-sep decimal-sep symbol-after decimals] sym :symbol}
+        (merge default-currency-format
+               {:symbol (str currency " ")}
+               (get formats currency))
+        [int-part frac] (str/split (format (str "%." decimals "f") (Math/abs (double amount)))
+                                   #"\.")
+        grouped (if (= grouping :indian)
+                  (group-digits-indian int-part group-sep)
+                  (group-digits int-part group-sep))
+        amt (str (when (neg? amount) "-") grouped (when frac (str decimal-sep frac)))]
+    (if symbol-after
+      (str amt " " sym)
+      (str sym amt))))
 
 (defn today []
   (str (java.time.LocalDate/now)))
@@ -78,7 +117,8 @@
         notes (or (:notes invoice) (:notes settings))
         paid? (= status "paid")
         payment-amt (or (:payment-amount invoice) (when paid? total) 0)
-        amount-due (- total payment-amt)]
+        amount-due (- total payment-amt)
+        formats (:currencies settings)]
     (selmer/render (slurp "templates/invoice.html")
                    {:title        (or (:title client) default-title)
                     :lut          (:lut client)
@@ -93,11 +133,11 @@
                     :from         (update settings :address nl->br)
                     :client       (update client :address nl->br)
                     :items        (map #(assoc % :formatted-amount
-                                               (format-amount (:amount %) currency))
+                                               (format-amount (:amount %) currency formats))
                                       items)
-                    :subtotal     (format-amount total currency)
-                    :payment-amount (when (> payment-amt 0) (format-amount (- payment-amt) currency))
-                    :amount-due   (format-amount amount-due currency)
+                    :subtotal     (format-amount total currency formats)
+                    :payment-amount (when (> payment-amt 0) (format-amount (- payment-amt) currency formats))
+                    :amount-due   (format-amount amount-due currency formats)
                     :notes        (when notes (nl->br notes))})))
 
 ;; --- pdf generation ---
@@ -139,7 +179,11 @@
                    :phone "+00-00000-00000"
                    :email "you@example.com"
                    :notes "Bank Details\nAccount: XXXX\nIFSC: XXXX"
-                   :chrome-bin default-chrome-bin})
+                   :chrome-bin default-chrome-bin
+                   :currencies (into {}
+                                     (map (fn [[code fmt]]
+                                            [code (merge default-currency-format fmt)]))
+                                     default-currency-formats)})
       (println (str "Sample settings created at " settings-file))
       (println "Edit this file with your details before creating invoices."))))
 
@@ -279,7 +323,8 @@
 
       ("invoice" "invoices")
       (let [invoices (read-invoices)
-            clients (read-clients)]
+            clients (read-clients)
+            formats (:currencies (read-edn settings-file))]
         (if (empty? invoices)
           (println "No invoices.")
           (doseq [[id inv] (sort invoices)]
@@ -287,7 +332,7 @@
                   total (reduce + 0 (map :amount (:items inv)))]
               (println (str "  [" id "] "
                             (:name client) " | "
-                            (format-amount total (:currency client)) " | "
+                            (format-amount total (:currency client) formats) " | "
                             (:status inv) " | "
                             (:issue-date inv)))))))
 
